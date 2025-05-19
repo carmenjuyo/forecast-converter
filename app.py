@@ -27,7 +27,7 @@ if uploaded_files:
             if sheet_name in xls.sheet_names:
                 try:
                     df = pd.read_excel(xls, sheet_name=sheet_name, header=24)
-                    segment_col = df.iloc[:, 0].dropna()
+                    segment_col = df.iloc[25:, 0].dropna()
                     unique_segments = set([str(s).strip() for s in segment_col if isinstance(s, str) and s.strip().upper() != 'TOTAL'])
                     existing_keys = set().union(*[row.keys() for row in compiled_data])
                     # Dynamically track any new segments
@@ -42,7 +42,7 @@ if uploaded_files:
                     row_2023 = {'filename': file_name, 'date': f"{month_day}/2023"}
                     for segment in segments:
                         try:
-                            seg_row = df[df.iloc[:, 0] == segment]
+                            seg_row = df[df.iloc[:, 0].astype(str).str.strip() == segment]
                             row_2023[f'{segment}_RN'] = float(seg_row.iloc[0, 1])
                             row_2023[f'{segment}_REV'] = float(seg_row.iloc[0, 9])
                         except:
