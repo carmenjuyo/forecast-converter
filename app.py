@@ -32,20 +32,19 @@ if uploaded_files:
                     new_segments = [
                         str(s).strip()
                         for s in segment_col
-                        if isinstance(s, str)
-                        and s.strip().upper() not in ['TOTAL', 'VS BUD 25']
+                        if isinstance(s, str) and s.strip().upper() not in ['TOTAL', 'VS BUD 25']
                     ]
                     for seg in new_segments:
                         if seg not in segment_order:
                             segment_order.append(seg)
                     existing_keys = set().union(*[row.keys() for row in compiled_data])
                     # Dynamically track any new segments
-                    for seg in unique_segments:
+                    for seg in new_segments:
                         if f"{seg}_RN" not in existing_keys or f"{seg}_REV" not in existing_keys:
                             for row in compiled_data:
                                 row.setdefault(f"{seg}_RN", 0.0)
                                 row.setdefault(f"{seg}_REV", 0.0)
-                    segments = list(unique_segments)
+                    segments = list(new_segments)
 
                     # 2023 data (B25 = col 1, J25 = col 9)
                     row_2023 = {'filename': file_name, 'date': f"{month_day}/2023"}
@@ -63,7 +62,7 @@ if uploaded_files:
                     row_2024 = {'filename': file_name, 'date': f"{month_day}/2024"}
                     for segment in segments:
                         try:
-                            seg_row = df[df.iloc[:, 0] == segment]
+                            seg_row = df[df.iloc[:, 0].astype(str).str.strip() == segment]
                             row_2024[f'{segment}_RN'] = float(seg_row.iloc[0, 2])
                             row_2024[f'{segment}_REV'] = float(seg_row.iloc[0, 10])
                         except:
@@ -75,7 +74,7 @@ if uploaded_files:
                     row_2025 = {'filename': file_name, 'date': f"{month_day}/2025"}
                     for segment in segments:
                         try:
-                            seg_row = df[df.iloc[:, 0] == segment]
+                            seg_row = df[df.iloc[:, 0].astype(str).str.strip() == segment]
                             row_2025[f'{segment}_RN'] = float(seg_row.iloc[0, 4])
                             row_2025[f'{segment}_REV'] = float(seg_row.iloc[0, 12])
                         except:
