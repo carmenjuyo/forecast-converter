@@ -27,7 +27,7 @@ if uploaded_files:
             if sheet_name in xls.sheet_names:
                 try:
                     df = pd.read_excel(xls, sheet_name=sheet_name, header=24)
-                    segment_col = df.iloc[:, 0].dropna()
+                    segment_col = df.iloc[25:42, 0].dropna()
                     segments = [str(s).strip() for s in segment_col if isinstance(s, str) and s.strip().upper() != 'TOTAL']
 
                     # 2023 data (B25 = col 1, J25 = col 9)
