@@ -17,6 +17,7 @@ month_mapping = {
 }
 
 compiled_data = []
+segment_order = []
 
 if uploaded_files:
     for uploaded_file in uploaded_files:
@@ -28,7 +29,15 @@ if uploaded_files:
                 try:
                     df = pd.read_excel(xls, sheet_name=sheet_name, header=24)
                     segment_col = df.iloc[:, 0].dropna()
-                    unique_segments = set([str(s).strip() for s in segment_col if isinstance(s, str) and s.strip().upper() != 'TOTAL'])
+                    new_segments = [
+                        str(s).strip()
+                        for s in segment_col
+                        if isinstance(s, str)
+                        and s.strip().upper() not in ['TOTAL', 'VS BUD 25']
+                    ]
+                    for seg in new_segments:
+                        if seg not in segment_order:
+                            segment_order.append(seg)
                     existing_keys = set().union(*[row.keys() for row in compiled_data])
                     # Dynamically track any new segments
                     for seg in unique_segments:
@@ -77,6 +86,11 @@ if uploaded_files:
                     st.warning(f"Could not process sheet {sheet_name} in {file_name}: {e}")
 
     final_df = pd.DataFrame(compiled_data)
+    # Reorder columns to match segment_order followed by any extras
+    base_cols = ['filename', 'date']
+    segment_cols = [f"{seg}_{suffix}" for seg in segment_order for suffix in ('RN', 'REV') if f"{seg}_{suffix}" in final_df.columns]
+    extra_cols = [col for col in final_df.columns if col not in base_cols + segment_cols]
+    final_df = final_df[base_cols + segment_cols + extra_cols]
     if final_df.empty:
         st.warning("⚠️ No data extracted — please check your file formatting and sheet structure.")
     else:
