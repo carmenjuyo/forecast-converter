@@ -28,7 +28,15 @@ if uploaded_files:
                 try:
                     df = pd.read_excel(xls, sheet_name=sheet_name, header=24)
                     segment_col = df.iloc[:, 0].dropna()
-                    segments = [str(s).strip() for s in segment_col if isinstance(s, str) and s.strip().upper() != 'TOTAL']
+                    unique_segments = set([str(s).strip() for s in segment_col if isinstance(s, str) and s.strip().upper() != 'TOTAL'])
+                    existing_keys = set().union(*[row.keys() for row in compiled_data])
+                    # Dynamically track any new segments
+                    for seg in unique_segments:
+                        if f"{seg}_RN" not in existing_keys or f"{seg}_REV" not in existing_keys:
+                            for row in compiled_data:
+                                row.setdefault(f"{seg}_RN", 0.0)
+                                row.setdefault(f"{seg}_REV", 0.0)
+                    segments = list(unique_segments)
 
                     # 2023 data (B25 = col 1, J25 = col 9)
                     row_2023 = {'filename': file_name, 'date': f"{month_day}/2023"}
@@ -69,12 +77,14 @@ if uploaded_files:
                     st.warning(f"Could not process sheet {sheet_name} in {file_name}: {e}")
 
     final_df = pd.DataFrame(compiled_data)
-    final_df['date'] = pd.to_datetime(final_df['date'], format="%d/%m/%Y")
-    final_df = final_df.sort_values(by=['filename', 'date']).reset_index(drop=True)
-    final_df['date'] = final_df['date'].dt.strftime("%d/%m/%Y")
-
-    st.success("✅ Data extracted successfully!")
-    st.dataframe(final_df.head())
+    if final_df.empty:
+        st.warning("⚠️ No data extracted — please check your file formatting and sheet structure.")
+    else:
+        final_df['date'] = pd.to_datetime(final_df['date'], format="%d/%m/%Y")
+        final_df = final_df.sort_values(by=['filename', 'date']).reset_index(drop=True)
+        final_df['date'] = final_df['date'].dt.strftime("%d/%m/%Y")
+        st.success("✅ Data extracted successfully!")
+        st.dataframe(final_df)
 
     csv = final_df.to_csv(index=False).encode('utf-8')
     st.download_button(
